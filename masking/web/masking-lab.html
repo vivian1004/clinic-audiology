@@ -459,8 +459,19 @@ const GEN={
         'HL_N 為非測試耳之氣導閾值；MEMC 使噪音剛好能遮蔽位於 NTE 閾值之跨越訊號，SF 涵蓋個體差異（MEMC 為平均值）。']};
   },
   imlBC(){
-    const mode=pick(['bing','bing','cond','high']);
-    const f=mode==='high'?pick([2000,4000]):pick([250,500,1000]);
+    const mode=pick(['bing','bing','fixed','fixed','cond','high']);
+    const f=mode==='high'?pick([2000,4000]):(mode==='fixed'?pick([500,1000]):pick([250,500,1000]));
+    if(mode==='fixed'){
+      const trans=pick(['sup','ins']), fi=FREQS.indexOf(f), oe=FIXED_OE[trans][fi];
+      const bcN=r5(0,40), acN=bcN+pick([0,5,10]), ans=acN+15+oe;
+      return {q:`以遮蔽重測右耳 ${f} Hz 骨導，遮蔽噪音以${trans==='sup'?'耳罩式':'插入式'}耳機送入左耳。OE 採固定值（Yacullo, 2009），IML 為多少 dB HL？（MEMC 5 dB、SF 10 dB）`,
+        givens:[giv('左耳 AC（NTE）',acN),giv('左耳 BC（NTE）',bcN),giv('耳機',trans==='sup'?'耳罩式':'插入式','')],type:'num',ans,
+        explain:[`<span class="formula">IML = HL_N + MEMC + SF + OE</span>`,
+          `左耳氣骨導差 ${acN-bcN} dB，無傳導成分，閉塞效應存在。`,
+          `OE 固定值：耳罩式 250/500/1000 Hz = 30/20/10 dB；插入式 = 10/10/0 dB。本題 ${trans==='sup'?'耳罩式':'插入式'} ${f} Hz → OE = ${oe} dB。`,
+          `= ${acN} + 5 + 10 + ${oe} = <b>${ans} dB HL</b>`,
+          oe===0?'插入式耳機之閉塞效應小，1000 Hz 以上不必加 OE。':'']};
+    }
     if(mode==='cond'){
       const bcN=r5(0,20), acN=bcN+pick([20,25,30,40]);
       const ans=acN+15;
