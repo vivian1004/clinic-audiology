@@ -29,6 +29,7 @@
   --panel:#0B252B; --panel-2:#123840; --panel-ink:#E3F1F3; --panel-muted:#86AAB2; --lcd:#061518; --lcd-ink:#8FE6C8;
   color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
 .wrap{max-width:1240px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:18px}
@@ -159,6 +160,27 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
 .rule p{margin:0;font-size:13.5px;color:var(--muted)}
 .howto{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-top:16px}
 .howto ol{margin:6px 0 0;padding-left:20px}
+/* ── 登記與全班成績 ── */
+.who{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+.who b{color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--ghost)}
+.dot.on{background:var(--ok)} .dot.warn{background:var(--warn)}
+.reg{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.reg label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.reg input{font:500 15px var(--f-body);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:180px;max-width:100%}
+.reg .note{flex-basis:100%}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.tile span{font-size:12.5px;color:var(--muted)} .tile b{display:block;font:600 26px var(--f-mono);color:var(--brand)}
+.roster{overflow-x:auto}
+.roster table{border-collapse:collapse;width:100%;font-size:13px;min-width:760px}
+.roster th,.roster td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
+.roster td{font-family:var(--f-mono)} .roster td.nm{font-family:var(--f-body);text-align:left}
+.roster th{font-weight:500;color:var(--muted);background:var(--surface);cursor:pointer}
+.bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;background:var(--brand-2)}
+.topic-stats{display:grid;grid-template-columns:auto minmax(80px,1fr) auto;gap:6px 12px;align-items:center;font-size:13.5px}
+.topic-stats .mono{color:var(--muted);font-size:12.5px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -172,8 +194,17 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
       <button role="tab" id="tab-practice" aria-selected="true" data-view="practice">原則練習</button>
       <button role="tab" id="tab-cases" aria-selected="false" data-view="cases">模擬案例</button>
       <button role="tab" id="tab-rules" aria-selected="false" data-view="rules">公式速查</button>
+      <button role="tab" id="tab-roster" aria-selected="false" data-view="roster" hidden>全班成績</button>
     </nav>
   </header>
+  <div class="who" id="who" style="margin:-6px 0 14px"><span class="dot"></span><span>連線中…</span></div>
+  <form class="reg" id="regForm" hidden>
+    <label for="regName">姓名<input id="regName" required maxlength="20" autocomplete="name"></label>
+    <label for="regSid">學號<input id="regSid" maxlength="20" inputmode="numeric" autocomplete="off"></label>
+    <button class="btn primary" type="submit">登記並開始同步</button>
+    <button class="btn" type="button" id="regCancel">取消</button>
+    <p class="note" style="margin:0">登記後，原則練習之作答紀錄與模擬案例評分會同步至授課教師之全班成績表。其他同學看不到個人成績。</p>
+  </form>
 
   <!-- 原則練習 -->
   <section id="view-practice">
@@ -298,6 +329,20 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
     </div>
   </section>
 
+  <!-- 全班成績（教師） -->
+  <section id="view-roster" hidden>
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div><h2>全班成績</h2><p class="muted" style="margin:0;font-size:13.5px">僅授課教師（擁有者與編輯者）可見；學生登記後即時更新。</p></div>
+      <div class="row"><button class="btn" id="copyCsv">複製為表格文字</button><button class="btn primary" id="saveCsv" hidden>下載 CSV</button></div>
+    </div>
+    <div class="tiles" id="rosterTiles"></div>
+    <div class="two" style="margin-bottom:14px">
+      <div class="card"><h3>各主題全班答對率</h3><div class="topic-stats" id="topicStats"></div></div>
+      <div class="card"><h3>模擬案例完成情形</h3><div class="topic-stats" id="caseStats"></div></div>
+    </div>
+    <div class="card roster" id="roster"><p class="note">尚無學生登記。學生於頁面上方按「登記姓名」後，即出現在此。</p></div>
+  </section>
+
   <!-- 公式速查 -->
   <section id="view-rules" hidden>
     <div class="rules" id="rules"></div>
@@ -334,7 +379,7 @@ const other=e=>e==='R'?'L':'R';
 
 /* ═════════════ 分頁 ═════════════ */
 function showView(v){
-  ['practice','cases','rules'].forEach(n=>{
+  ['practice','cases','rules','roster'].forEach(n=>{
     $('#view-'+n).hidden=n!==v;
     $('#tab-'+n).setAttribute('aria-selected',String(n===v));
   });
@@ -515,7 +560,7 @@ function renderTopics(){
   h+=`<button class="btn" id="resetTally" style="align-self:flex-start">清除練習紀錄</button>`;
   box.innerHTML=h;
   box.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{P.topic=b.dataset.t;store.set('ml-practice',P);renderTopics();newQ()});
-  $('#resetTally').onclick=()=>{P.tally={};store.set('ml-practice',P);renderTopics()};
+  $('#resetTally').onclick=()=>{P.tally={};store.set('ml-practice',P);renderTopics();pushScores(true)};
 }
 function newQ(){
   const id=P.topic==='all'?pick(TOPICS).id:P.topic;
@@ -539,7 +584,7 @@ function check(v,btn){
   if(answered) return; answered=true;
   const q=curQ, ok=q.type==='num'?v===q.ans:v===q.ans;
   const s=P.tally[q.topic]||{c:0,n:0}; s.n++; if(ok)s.c++; P.tally[q.topic]=s;
-  P.streak=ok?(P.streak||0)+1:0; store.set('ml-practice',P);
+  P.streak=ok?(P.streak||0)+1:0; store.set('ml-practice',P); pushScores();
   if(btn){btn.classList.add(ok?'picked-ok':'picked-bad'); if(!ok) $('#qcard').querySelectorAll('.choice').forEach(b=>{if(b.dataset.c===q.ans)b.classList.add('picked-ok')});}
   $('#fb').innerHTML=`<div class="fb ${ok?'ok':'bad'}"><div class="verdict">${ok?'正確':'答案：'+q.ans+(q.type==='num'?' dB'+(String(q.q).includes('dB HL')?' HL':''):'')}</div><ul>${q.explain.filter(Boolean).map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
   renderTopics(); try{$('#nextQ').focus({preventScroll:true})}catch(e){}
@@ -858,6 +903,8 @@ function grade(){
     out.push({e,sig,f,rec:r?(r.cnm?'CNM':(r.nr?'NR':r.v)+(r.masked?`（${r.M}）`:'')):'—',tv:tvTxt,st,cls,why});
   })));
   S.graded=true; save();
+  const cr=CASEREC[S.caseId]||{n:0,best:null}; cr.n=(cr.n||0)+1; cr.last={ok,tot,trials:S.trials,at:new Date().toISOString()};
+  if(!cr.best||ok>cr.best.ok) cr.best={ok,tot}; CASEREC[S.caseId]=cr; store.set('ml-caserec',CASEREC); pushScores(true);
   const pct=Math.round(ok/tot*100);
   const hasTypes=PAT.types?`<p class="note">隨機案例之實際型態：右耳 ${PAT.types[0]}、左耳 ${PAT.types[1]}。</p>`:'';
   const iaTxt=`<p class="note">本案例之耳間衰減（耳罩式）：${PAT.IA.sup.join('、')} dB；插入式：${PAT.IA.ins.join('、')} dB（250–4000 Hz）。</p>`;
@@ -893,9 +940,122 @@ const RULES=[
 ];
 $('#rules').innerHTML=RULES.map(r=>`<div class="rule"><h3 style="margin:0">${r[0]}</h3><div class="f">${r[1]}</div><p>${r[2]}</p></div>`).join('');
 
+/* ═════════════ 登記與成績同步 ═════════════ */
+let CASEREC=store.get('ml-caserec',{});
+const SYNC={db:null,ref:null,uid:null,admin:false,reg:store.get('ml-reg',null),state:'connecting',queue:Promise.resolve(),timer:null,readOnly:false,rows:[]};
+const clone=o=>JSON.parse(JSON.stringify(o||{}));
+async function initSync(){
+  let db=null,user=null;
+  try{ if(window.claude&&window.claude.use){ [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]); } }catch(e){}
+  try{ if(user){ SYNC.uid=await user.id(); SYNC.admin=!!(await user.canEdit()); } }catch(e){}
+  if(db&&SYNC.uid){
+    SYNC.db=db; SYNC.ref=db.doc('scores/'+SYNC.uid);
+    try{
+      const snap=await SYNC.ref.get();
+      if(snap.exists){
+        const d=snap.data()||{};
+        if(d.name) SYNC.reg={name:d.name,sid:d.sid||''};
+        if(d.practice){P.tally=clone(d.practice); store.set('ml-practice',P); renderTopics();}
+        if(d.cases){CASEREC=clone(d.cases); store.set('ml-caserec',CASEREC);}
+        store.set('ml-reg',SYNC.reg);
+      } else SYNC.reg=null;
+      SYNC.state='ready';
+    }catch(e){SYNC.state='local';}
+  } else SYNC.state='local';
+  renderWho();
+  if(SYNC.admin&&SYNC.db) enableRoster();
+}
+function renderWho(msg){
+  const w=$('#who'); const r=SYNC.reg;
+  if(SYNC.state==='connecting'){w.innerHTML='<span class="dot"></span><span>連線中…</span>';return;}
+  if(SYNC.state==='local'){w.innerHTML='<span class="dot"></span><span>未取得同步權限（未登入或未獲分享）：練習成績僅存於此瀏覽器。</span>';return;}
+  if(SYNC.readOnly){w.innerHTML='<span class="dot warn"></span><span>此帳號僅有檢視權限，成績無法同步；請洽授課教師開放「Contributor」權限。</span>';return;}
+  if(!r){w.innerHTML=`<span class="dot warn"></span><span>尚未登記，成績不會列入全班成績表。</span><button class="btn" id="openReg">登記姓名</button>`;$('#openReg').onclick=openReg;return;}
+  w.innerHTML=`<span class="dot on"></span><span>已登記：<b>${esc(r.name)}</b>${r.sid?'（'+esc(r.sid)+'）':''}・${msg||'成績已同步'}</span><button class="btn" id="openReg">修改</button>`;
+  $('#openReg').onclick=openReg;
+}
+function openReg(){
+  const f=$('#regForm'); f.hidden=false;
+  $('#regName').value=SYNC.reg?SYNC.reg.name:''; $('#regSid').value=SYNC.reg?SYNC.reg.sid:'';
+  try{$('#regName').focus()}catch(e){}
+}
+$('#regCancel').onclick=()=>{$('#regForm').hidden=true};
+$('#regForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('#regName').value.trim(), sid=$('#regSid').value.trim();
+  if(!name) return;
+  SYNC.reg={name,sid}; store.set('ml-reg',SYNC.reg); $('#regForm').hidden=true; pushScores(true);
+});
+function pushScores(now){
+  if(!SYNC.ref||!SYNC.reg||SYNC.readOnly) return;
+  clearTimeout(SYNC.timer);
+  SYNC.timer=setTimeout(()=>{
+    const body={name:SYNC.reg.name,sid:SYNC.reg.sid||'',practice:clone(P.tally),cases:clone(CASEREC),updatedAt:new Date().toISOString()};
+    renderWho('同步中…');
+    SYNC.queue=SYNC.queue.then(()=>SYNC.ref.set(body)).then(()=>renderWho(),err=>{
+      if(err&&err.code==='invalid_argument'){SYNC.readOnly=true;renderWho();}
+      else if(err&&err.code==='quota_exceeded') renderWho('儲存空間已滿，請洽授課教師');
+      else renderWho('暫時無法同步，下次作答時重試');
+    });
+  },now?0:1500);
+}
+
+/* ── 全班成績（教師） ── */
+let rosterSort={k:'sid',dir:1}, rosterSub=null;
+function enableRoster(){
+  $('#tab-roster').hidden=false;
+  if(rosterSub) return;
+  rosterSub=SYNC.db.collection('scores').onSnapshot(snap=>{
+    SYNC.rows=snap.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(r=>r.name);
+    renderRoster();
+  },()=>{$('#roster').innerHTML='<p class="note">無法讀取全班成績。</p>';});
+  if(location.hash==='#roster') showView('roster');
+  window.claude.use('downloads').then(dl=>{ if(dl){ SYNC.dl=dl; $('#saveCsv').hidden=false; } }).catch(()=>{});
+}
+const GROUPS=['基礎','進階','延伸'];
+function sumTally(t,ids){let c=0,n=0; ids.forEach(id=>{const s=(t||{})[id]; if(s){c+=s.c||0;n+=s.n||0;}}); return {c,n};}
+function rosterData(){
+  return SYNC.rows.map(r=>{
+    const all=sumTally(r.practice,TOPICS.map(t=>t.id));
+    const g={}; GROUPS.forEach(G=>g[G]=sumTally(r.practice,TOPICS.filter(t=>t.group===G).map(t=>t.id)));
+    const cases={}; CASES.forEach(c=>{const x=(r.cases||{})[c.id]; cases[c.id]=x&&x.last?x:null;});
+    return {sid:r.sid||'',name:r.name,all,pct:all.n?all.c/all.n:-1,g,cases,done:Object.values(cases).filter(Boolean).length,at:r.updatedAt||''};
+  });
+}
+const fmtPct=(c,n)=>n?Math.round(c/n*100)+'%':'—';
+const fmtAt=s=>{if(!s)return '—';const d=new Date(s);return isNaN(d)?'—':`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+function renderRoster(){
+  const rows=rosterData();
+  const k=rosterSort.k, dir=rosterSort.dir;
+  rows.sort((a,b)=>{const va=a[k],vb=b[k]; return (va>vb?1:va<vb?-1:0)*dir;});
+  const withP=rows.filter(r=>r.all.n), avg=withP.length?withP.reduce((s,r)=>s+r.pct,0)/withP.length:null;
+  $('#rosterTiles').innerHTML=`<div class="tile"><span>已登記人數</span><b>${rows.length}</b></div><div class="tile"><span>練習平均正確率</span><b>${avg===null?'—':Math.round(avg*100)+'%'}</b></div><div class="tile"><span>總作答題數</span><b>${rows.reduce((s,r)=>s+r.all.n,0)}</b></div><div class="tile"><span>完成 ≥ 1 案例</span><b>${rows.filter(r=>r.done).length}</b></div>`;
+  $('#topicStats').innerHTML=TOPICS.map(t=>{let c=0,n=0; SYNC.rows.forEach(r=>{const x=(r.practice||{})[t.id]; if(x){c+=x.c||0;n+=x.n||0;}}); const p=n?c/n:0; return `<span>${t.name}</span><div class="bar"><i style="width:${Math.round(p*100)}%"></i></div><span class="mono">${fmtPct(c,n)}（${n} 題）</span>`;}).join('');
+  $('#caseStats').innerHTML=CASES.map(c=>{const done=rows.filter(r=>r.cases[c.id]); const avgc=done.length?done.reduce((s,r)=>s+r.cases[c.id].last.ok/r.cases[c.id].last.tot,0)/done.length:0; return `<span>${c.name}</span><div class="bar"><i style="width:${Math.round(avgc*100)}%"></i></div><span class="mono">${done.length} 人｜平均 ${done.length?Math.round(avgc*100)+'%':'—'}</span>`;}).join('');
+  if(!rows.length){$('#roster').innerHTML='<p class="note">尚無學生登記。學生於頁面上方按「登記姓名」後，即出現在此。</p>';return;}
+  const th=(key,label)=>`<th data-k="${key}">${label}${rosterSort.k===key?(rosterSort.dir>0?' ▲':' ▼'):''}</th>`;
+  $('#roster').innerHTML=`<table><tr>${th('sid','學號')}${th('name','姓名')}${th('pct','練習正確率')}<th>作答</th>${GROUPS.map(G=>`<th>${G}</th>`).join('')}${CASES.map(c=>`<th title="最近一次評分（最佳）">${c.name}</th>`).join('')}${th('at','最後更新')}</tr>${rows.map(r=>`<tr><td>${esc(r.sid)||'—'}</td><td class="nm">${esc(r.name)}</td><td>${fmtPct(r.all.c,r.all.n)}</td><td>${r.all.c}/${r.all.n}</td>${GROUPS.map(G=>`<td>${r.g[G].n?r.g[G].c+'/'+r.g[G].n:'—'}</td>`).join('')}${CASES.map(c=>{const x=r.cases[c.id]; return `<td>${x?`${x.last.ok}/${x.last.tot}${x.best&&x.best.ok!==x.last.ok?`（${x.best.ok}）`:''}`:'—'}</td>`;}).join('')}<td>${fmtAt(r.at)}</td></tr>`).join('')}</table><p class="note">案例欄：最近一次評分正確點數／20，括號內為最佳成績。點選欄名可排序。</p>`;
+  $('#roster').querySelectorAll('th[data-k]').forEach(h=>h.onclick=()=>{const kk=h.dataset.k; rosterSort={k:kk,dir:rosterSort.k===kk?-rosterSort.dir:(kk==='pct'||kk==='at'?-1:1)}; renderRoster();});
+}
+function rosterCsv(){
+  const q=v=>{const s=String(v??''); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const head=['學號','姓名','練習答對','練習作答','練習正確率',...GROUPS.map(G=>G+'（答對/作答）'),...CASES.map(c=>c.name+'（最近）'),...CASES.map(c=>c.name+'（最佳）'),'最後更新'];
+  const lines=[head.map(q).join(',')];
+  rosterData().sort((a,b)=>a.sid>b.sid?1:-1).forEach(r=>lines.push([r.sid,r.name,r.all.c,r.all.n,fmtPct(r.all.c,r.all.n),...GROUPS.map(G=>`${r.g[G].c}/${r.g[G].n}`),...CASES.map(c=>r.cases[c.id]?`${r.cases[c.id].last.ok}/${r.cases[c.id].last.tot}`:''),...CASES.map(c=>r.cases[c.id]&&r.cases[c.id].best?`${r.cases[c.id].best.ok}/${r.cases[c.id].best.tot}`:''),r.at].map(q).join(',')));
+  return lines.join('\n');
+}
+$('#saveCsv').onclick=async()=>{ if(!SYNC.dl) return; try{ await SYNC.dl.save({filename:'臨床遮蔽練習_全班成績.csv',data:'\ufeff'+rosterCsv()}); }catch(e){} };
+$('#copyCsv').onclick=async()=>{
+  const txt=rosterCsv().replace(/,/g,'\t'); const b=$('#copyCsv');
+  try{ await navigator.clipboard.writeText(txt); b.textContent='已複製'; }catch(e){ b.textContent='無法複製'; }
+  setTimeout(()=>{b.textContent='複製為表格文字'},2000);
+};
+
 /* ═════════════ 啟動 ═════════════ */
 renderTopics(); newQ();
 loadSim(store.get('ml-case','deaf'));
 const h0=(location.hash||'').slice(1);
-showView(['practice','cases','rules'].includes(h0)?h0:store.get('ml-view','practice'));
+const v0=['practice','cases','rules'].includes(h0)?h0:store.get('ml-view','practice');
+showView(v0==='roster'?'practice':v0);
+initSync();
 </script>
