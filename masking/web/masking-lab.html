@@ -1,0 +1,901 @@
+<title>臨床遮蔽練習室</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 頂部分頁列；練習＝主題欄＋題目卡；案例＝聽力計面板｜聽力圖與高原圖，窄螢幕改單欄 */
+:root{
+  --bg:#F3F6F6; --surface:#FFFFFF; --sunk:#E8EFF0; --ink:#1E2A2E; --muted:#5C6C72; --line:#D3DEE1;
+  --brand:#0F4C5C; --brand-2:#3E8E9C; --accent:#D9642A; --accent-tint:#FBE9DF;
+  --right:#C8312B; --left:#1F5FBF; --ghost:#8A9AA0;
+  --ok:#2E7D4F; --ok-tint:#E2F2E8; --bad:#B3261E; --bad-tint:#FBE4E2; --warn:#A76A12; --warn-tint:#FBF0DA;
+  --panel:#12343D; --panel-2:#1B4651; --panel-ink:#E3F1F3; --panel-muted:#93B7BF; --lcd:#0B2329; --lcd-ink:#8FE6C8;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1719; --surface:#142225; --sunk:#1A2C30; --ink:#E2ECEE; --muted:#93A6AB; --line:#2A3E43;
+  --brand:#6BB9C7; --brand-2:#3E8E9C; --accent:#EE8A55; --accent-tint:#3A2419;
+  --right:#FF7D74; --left:#82A9FF; --ghost:#6D8086;
+  --ok:#6CCB91; --ok-tint:#16301F; --bad:#FF8A80; --bad-tint:#3A1A18; --warn:#E3B05A; --warn-tint:#33280F;
+  --panel:#0B252B; --panel-2:#123840; --panel-ink:#E3F1F3; --panel-muted:#86AAB2; --lcd:#061518; --lcd-ink:#8FE6C8;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1719; --surface:#142225; --sunk:#1A2C30; --ink:#E2ECEE; --muted:#93A6AB; --line:#2A3E43;
+  --brand:#6BB9C7; --brand-2:#3E8E9C; --accent:#EE8A55; --accent-tint:#3A2419;
+  --right:#FF7D74; --left:#82A9FF; --ghost:#6D8086;
+  --ok:#6CCB91; --ok-tint:#16301F; --bad:#FF8A80; --bad-tint:#3A1A18; --warn:#E3B05A; --warn-tint:#33280F;
+  --panel:#0B252B; --panel-2:#123840; --panel-ink:#E3F1F3; --panel-muted:#86AAB2; --lcd:#061518; --lcd-ink:#8FE6C8;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1240px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:18px}
+.brand h1{margin:0;font-size:26px;letter-spacing:.02em;color:var(--brand);text-wrap:balance}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+nav.tabs{display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:999px;flex-wrap:wrap}
+nav.tabs button{border:0;background:transparent;color:var(--muted);font:500 14.5px var(--f-body);padding:7px 16px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--brand);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+button{font-family:var(--f-body)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+h2{font-size:19px;margin:0 0 4px;color:var(--ink)}
+h3{font-size:15px;margin:0 0 8px;color:var(--brand);letter-spacing:.02em}
+.muted{color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--brand-2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--surface)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* ── 原則練習 ── */
+.practice{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px}
+@media (max-width:820px){.practice{grid-template-columns:minmax(0,1fr)}}
+.topics{display:flex;flex-direction:column;gap:14px}
+.topic-group h3{margin-bottom:6px}
+.topic{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid transparent;background:transparent;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--ink);font-size:14px}
+.topic:hover{background:var(--sunk)}
+.topic[aria-pressed="true"]{background:var(--surface);border-color:var(--line);color:var(--brand);font-weight:700}
+.topic .score{font:500 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.qhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.chip{display:inline-block;font-size:12px;letter-spacing:.06em;color:var(--brand);background:var(--sunk);padding:2px 10px;border-radius:999px}
+.qtext{font-size:17px;line-height:1.7;margin:0}
+.givens{display:flex;flex-wrap:wrap;gap:8px}
+.given{background:var(--sunk);border-radius:8px;padding:6px 12px;display:flex;flex-direction:column;min-width:96px}
+.given span{font-size:12px;color:var(--muted)}
+.given b{font:600 17px var(--f-mono)}
+.qtable{overflow-x:auto}
+.qtable table{border-collapse:collapse;font-size:14px}
+.qtable td,.qtable th{border:1px solid var(--line);padding:4px 10px;text-align:center;font-family:var(--f-mono)}
+.qtable th{background:var(--sunk);font-family:var(--f-body);font-weight:500}
+.answer{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.answer input{width:110px;font:600 18px var(--f-mono);padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.choice{border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:9px 18px;border-radius:8px;cursor:pointer;font-size:15px}
+.choice:hover{border-color:var(--brand-2)}
+.choice.picked-ok{background:var(--ok-tint);border-color:var(--ok);color:var(--ok);font-weight:700}
+.choice.picked-bad{background:var(--bad-tint);border-color:var(--bad);color:var(--bad);font-weight:700}
+.fb{border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.fb.ok{background:var(--ok-tint)} .fb.bad{background:var(--bad-tint)}
+.fb .verdict{font-weight:700} .fb.ok .verdict{color:var(--ok)} .fb.bad .verdict{color:var(--bad)}
+.fb ol,.fb ul{margin:0;padding-left:20px}
+.formula{font-family:var(--f-mono);background:var(--surface);border-radius:6px;padding:2px 8px;display:inline-block}
+.tally{display:flex;gap:18px;font-size:13px;color:var(--muted)}
+.tally b{font:600 15px var(--f-mono);color:var(--ink)}
+
+/* ── 模擬案例 ── */
+.cases-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.case-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;text-align:left;color:var(--ink);font-size:13.5px;line-height:1.35}
+.case-btn small{display:block;color:var(--muted);font-size:12px}
+.case-btn[aria-pressed="true"]{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.sim{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:960px){.sim{grid-template-columns:minmax(0,1fr)}}
+.casebox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.casebox ul{margin:6px 0 0;padding-left:18px}
+.device{background:var(--panel);color:var(--panel-ink);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.device .lab{font-size:11.5px;letter-spacing:.12em;color:var(--panel-muted)}
+.seg{display:flex;background:var(--panel-2);border-radius:9px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{flex:1;border:0;background:transparent;color:var(--panel-muted);padding:7px 6px;border-radius:7px;cursor:pointer;font-size:13.5px;min-width:52px}
+.seg button[aria-pressed="true"]{background:var(--panel-ink);color:var(--panel);font-weight:700}
+.seg button.r[aria-pressed="true"]{background:var(--right);color:#fff}
+.seg button.l[aria-pressed="true"]{background:var(--left);color:#fff}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dial{background:var(--panel-2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.lcd{background:var(--lcd);color:var(--lcd-ink);font:600 34px var(--f-mono);text-align:right;padding:4px 12px;border-radius:8px;letter-spacing:.02em}
+.lcd small{font-size:13px;margin-left:4px;color:var(--panel-muted)}
+.lcd.off{color:var(--panel-muted);opacity:.6}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.steps button{border:0;background:var(--panel);color:var(--panel-ink);border-radius:6px;padding:6px 0;cursor:pointer;font:500 13px var(--f-mono)}
+.steps button:hover{background:#1f5663}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;color:var(--panel-ink)}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+.present-row{display:flex;gap:12px;align-items:stretch}
+.present{flex:1;border:0;border-radius:12px;background:var(--accent);color:#fff;font:700 18px var(--f-body);padding:14px;cursor:pointer;letter-spacing:.08em}
+.present:active{transform:translateY(1px)}
+.lamp{width:118px;border-radius:12px;background:var(--panel-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;color:var(--panel-muted)}
+.lamp i{width:26px;height:26px;border-radius:50%;background:#2a4a52;display:block;transition:background .15s}
+.lamp.yes i{background:#5BE39B;box-shadow:0 0 14px #5BE39B}
+.lamp.yes{color:#BFF5D7}
+.lamp.no i{background:#3a4a4e}
+.rec-row{display:flex;flex-wrap:wrap;gap:6px}
+.rec-row button{border:1px solid var(--panel-muted);background:transparent;color:var(--panel-ink);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px}
+.rec-row button:hover{background:var(--panel-2)}
+.rec-row button.main{background:var(--panel-ink);color:var(--panel);border-color:var(--panel-ink);font-weight:700}
+.kbd{font:500 11.5px var(--f-mono);color:var(--panel-muted)}
+.status-line{font-size:13px;color:var(--panel-muted);min-height:20px}
+.status-line b{color:var(--panel-ink)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.right-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.audiogram-wrap{overflow-x:auto}
+svg text{font-family:var(--f-body)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:4px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+.hint dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13.5px}
+.hint dt{color:var(--muted)} .hint dd{margin:0;font-family:var(--f-mono)}
+.hint .flag{font-family:var(--f-body);font-size:12px;padding:1px 8px;border-radius:999px;margin-left:6px}
+.flag.yes{background:var(--accent-tint);color:var(--accent)} .flag.no{background:var(--sunk);color:var(--muted)}
+.log{max-height:220px;overflow:auto}
+.log table,.grade table{border-collapse:collapse;width:100%;font-size:13px}
+.log th,.log td,.grade th,.grade td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:center}
+.log td,.grade td{font-family:var(--f-mono)}
+.log th,.grade th{font-weight:500;color:var(--muted);position:sticky;top:0;background:var(--surface)}
+.grade{overflow-x:auto}
+.grade td.reason{font-family:var(--f-body);text-align:left}
+.tag{font-family:var(--f-body);font-size:12px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--ok-tint);color:var(--ok)} .tag.bad{background:var(--bad-tint);color:var(--bad)} .tag.warn{background:var(--warn-tint);color:var(--warn)} .tag.none{background:var(--sunk);color:var(--muted)}
+.score-big{font:600 30px var(--f-mono);color:var(--brand)}
+details summary{cursor:pointer;color:var(--brand);font-weight:500}
+.note{font-size:12.5px;color:var(--muted)}
+.oe-in{width:64px;font:600 14px var(--f-mono);padding:3px 6px;border-radius:6px;border:1px solid var(--panel-muted);background:var(--lcd);color:var(--lcd-ink)}
+
+/* ── 公式速查 ── */
+.rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.rule .f{font:600 16px var(--f-mono);color:var(--brand)}
+.rule p{margin:0;font-size:13.5px;color:var(--muted)}
+.howto{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-top:16px}
+.howto ol{margin:6px 0 0;padding-left:20px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>臨床遮蔽練習室</h1>
+      <p>依 Gelfand《Essentials of Audiology》第 9 章｜先練原則，再上虛擬聽力計完成模擬案例</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="分頁">
+      <button role="tab" id="tab-practice" aria-selected="true" data-view="practice">原則練習</button>
+      <button role="tab" id="tab-cases" aria-selected="false" data-view="cases">模擬案例</button>
+      <button role="tab" id="tab-rules" aria-selected="false" data-view="rules">公式速查</button>
+    </nav>
+  </header>
+
+  <!-- 原則練習 -->
+  <section id="view-practice">
+    <div class="practice">
+      <aside class="topics" id="topics"></aside>
+      <div class="qcard" id="qcard" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- 模擬案例 -->
+  <section id="view-cases" hidden>
+    <div class="cases-bar" id="caseBar"></div>
+    <div class="sim">
+      <div>
+        <div class="casebox" id="caseBox"></div>
+        <div class="device" id="device">
+          <div>
+            <div class="lab">測試耳</div>
+            <div class="seg" id="segEar">
+              <button class="r" data-v="R" aria-pressed="true">右耳 R</button>
+              <button class="l" data-v="L" aria-pressed="false">左耳 L</button>
+            </div>
+          </div>
+          <div class="ctrl-grid">
+            <div>
+              <div class="lab">測試訊號</div>
+              <div class="seg" id="segSig">
+                <button data-v="ac" aria-pressed="true">氣導</button>
+                <button data-v="bc" aria-pressed="false">骨導</button>
+              </div>
+            </div>
+            <div>
+              <div class="lab">耳機類型</div>
+              <div class="seg" id="segTrans">
+                <button data-v="sup" aria-pressed="true">耳罩式</button>
+                <button data-v="ins" aria-pressed="false">插入式</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="lab">頻率（Hz）</div>
+            <div class="seg" id="segFreq"></div>
+          </div>
+          <div class="ctrl-grid">
+            <div class="dial">
+              <div class="lab">純音（測試耳）</div>
+              <div class="lcd" id="lcdTone">30<small>dB HL</small></div>
+              <div class="steps" id="toneSteps">
+                <button data-d="-10">−10</button><button data-d="-5">−5</button><button data-d="5">+5</button><button data-d="10">+10</button>
+              </div>
+            </div>
+            <div class="dial">
+              <div class="lab">遮蔽噪音（非測試耳）</div>
+              <div class="lcd off" id="lcdNoise">—<small>dB EM</small></div>
+              <div class="steps" id="noiseSteps">
+                <button data-d="-10">−10</button><button data-d="-5">−5</button><button data-d="5">+5</button><button data-d="10">+10</button>
+              </div>
+              <label class="toggle"><input type="checkbox" id="maskOn"> 開啟遮蔽噪音（NBN）</label>
+            </div>
+          </div>
+          <label class="toggle" id="occlWrap"><input type="checkbox" id="occl"> 非測試耳戴上耳機（不給噪音，用於 Bing 測驗）</label>
+          <div class="present-row">
+            <button class="present" id="present">給音</button>
+            <div class="lamp" id="lamp" aria-live="polite"><i></i><span id="lampTxt">待命</span></div>
+          </div>
+          <div class="status-line" id="statusLine"></div>
+          <div>
+            <div class="lab">記錄</div>
+            <div class="rec-row">
+              <button class="main" id="recThr">記錄閾值</button>
+              <button id="recNR">記錄無反應 NR</button>
+              <button id="recCNM">註記 could not mask</button>
+              <button id="recPlateau">加入高原圖</button>
+              <button id="recClear">清除此點</button>
+            </div>
+          </div>
+          <div class="kbd">鍵盤：↑↓ 純音 ±5｜PgUp/PgDn 噪音 ±5｜空白鍵 給音｜Enter 記錄閾值</div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">聽力圖</h3>
+            <label class="row note" style="gap:6px"><input type="checkbox" id="showTruth" disabled> 顯示真實閾值（評分後開放）</label>
+          </div>
+          <div class="audiogram-wrap"><svg id="audiogram" viewBox="0 0 560 430" width="100%" role="img" aria-label="聽力圖"></svg></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="two">
+          <div class="card">
+            <h3>高原圖｜<span id="plateauTitle"></span></h3>
+            <svg id="plateau" viewBox="0 0 320 220" width="100%" role="img" aria-label="高原圖"></svg>
+            <div class="note">每找到一次遮蔽下之閾值，按「加入高原圖」，以目前純音強度為縱軸、噪音量為橫軸。</div>
+          </div>
+          <div class="card hint">
+            <details id="hintBox">
+              <summary>計算提示（依已記錄之數值）</summary>
+              <div id="hint" style="margin-top:8px"></div>
+            </details>
+            <div class="note" style="margin-top:8px">提示僅以聽力圖上已記錄之數值計算，未記錄者不顯示。建議先自行計算，再開啟核對。</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">施測紀錄</h3>
+            <span class="note" id="trialCount"></span>
+          </div>
+          <div class="log" id="log"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">完成與評分</h3>
+            <div class="row">
+              <button class="btn" id="resetCase">重新開始此案例</button>
+              <button class="btn primary" id="grade">完成並評分</button>
+            </div>
+          </div>
+          <div id="gradeOut" class="grade" style="margin-top:10px"><p class="note">完成兩耳 250–4000 Hz 之氣導與骨導閾值後按「完成並評分」。評分比對真實閾值（容許 ±5 dB），並檢查依規則應遮蔽者是否已以遮蔽確認。</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 公式速查 -->
+  <section id="view-rules" hidden>
+    <div class="rules" id="rules"></div>
+    <div class="howto">
+      <h3>模擬案例之建議施測流程</h3>
+      <ol>
+        <li>兩耳未遮蔽氣導（250–4000 Hz），再做未遮蔽骨導。</li>
+        <li>逐頻率判斷骨導是否須遮蔽（ABG ≥ 15 dB）。須遮蔽者：先勾選「非測試耳戴上耳機」重測骨導（Bing），求出 OE（≤ 1000 Hz）。</li>
+        <li>計算 IML（AC_N + 5 + 10 + OE），先核對是否已達過度遮蔽起點（IA + BC_T + 5），再開啟噪音重測。</li>
+        <li>閾值移動 ≤ 5 dB → 記錄遮蔽閾值；移動 &gt; 5 dB → 以高原法逐步提高噪音，每次求得閾值即「加入高原圖」。</li>
+        <li>以真實之 BC_N 判斷氣導（AC_T − BC_N ≥ 40 dB，插入式改用其最小 IA），須遮蔽者同上處理。</li>
+        <li>確無高原時，可改插入式耳機重試；仍無法遮蔽者註記 could not mask。</li>
+      </ol>
+      <p class="note">模擬模型：純音與噪音之跨越皆經骨導途徑；噪音以 dB EM 校正（MEMC 已內建，設定 X dB EM 剛好遮蔽 X dB HL）；骨導遮蔽時非測試耳若無傳導成分即產生閉塞效應；未納入中樞遮蔽與反應變異。每位模擬個案之耳間衰減各自不同且不公開。</p>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const FREQS=[250,500,1000,2000,4000];
+const NOHEAR=999;
+const AC_MAX=[105,110,110,110,110];
+const BC_MAX=[45,65,70,70,65];
+const NOISE_MAX=110;
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const r5=(a,b)=>5*rnd(Math.ceil(a/5),Math.floor(b/5));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const earName=e=>e==='R'?'右耳':'左耳';
+const other=e=>e==='R'?'L':'R';
+
+/* ═════════════ 分頁 ═════════════ */
+function showView(v){
+  ['practice','cases','rules'].forEach(n=>{
+    $('#view-'+n).hidden=n!==v;
+    $('#tab-'+n).setAttribute('aria-selected',String(n===v));
+  });
+  store.set('ml-view',v);
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{showView(b.dataset.view);try{history.replaceState(null,'','#'+b.dataset.view)}catch(e){}}));
+
+/* ═════════════ 原則練習：題目產生器 ═════════════ */
+const TOPICS=[
+  {id:'bcRule',name:'骨導遮蔽時機',group:'基礎'},
+  {id:'acRule',name:'氣導遮蔽時機',group:'基礎'},
+  {id:'imlAC',name:'氣導初始遮蔽量',group:'基礎'},
+  {id:'imlBC',name:'骨導初始遮蔽量與 OE',group:'基礎'},
+  {id:'interpret',name:'初始遮蔽量之判讀',group:'基礎'},
+  {id:'plateau',name:'高原判讀',group:'進階'},
+  {id:'overmask',name:'過度遮蔽與 MML',group:'進階'},
+  {id:'imlOver',name:'初始遮蔽量是否過度遮蔽',group:'進階'},
+  {id:'optimized',name:'最佳化遮蔽法',group:'進階'},
+  {id:'supra',name:'閾上純音測驗',group:'延伸'},
+  {id:'speech',name:'語音測驗',group:'延伸'},
+  {id:'sal',name:'SAL 測驗',group:'延伸'}
+];
+const giv=(k,v,u)=>({k,v,u:u===undefined?'dB HL':u});
+const GEN={
+  bcRule(){
+    const e=pick(['R','L']), f=pick(FREQS), ac=r5(20,75);
+    const bc=Math.max(-5,ac-pick([0,5,10,15,20,25,35,45]));
+    const abg=ac-bc, yes=abg>=15;
+    return {q:`${earName(e)} ${f} Hz 之未遮蔽骨導是否須以遮蔽重測？`,
+      givens:[giv(`${earName(e)} AC`,ac),giv('未遮蔽 BC',bc)],
+      type:'choice',choices:['須遮蔽','不須遮蔽'],ans:yes?'須遮蔽':'不須遮蔽',
+      explain:[`測試耳氣骨導差 ABG = ${ac} − ${bc} = <b>${abg} dB</b>，${yes?'≥':'<'} 15 dB。`,
+        yes?'骨導規則：ABG > 10 dB（即 ≥ 15 dB）時，應於非測試耳給予遮蔽重測骨導。':'ABG ≤ 10 dB 屬臨床閾值之誤差範圍（±5 dB），無論骨導來自哪一耳，判讀結論相同，故不須遮蔽。',
+        '註：ASHA（2005）與 Studebaker（1964）採較嚴格之 ABG ≥ 10 dB。']};
+  },
+  acRule(){
+    const trans=pick(['sup','sup','ins']), f=pick(FREQS);
+    const ia=trans==='sup'?40:(f<=1000?75:50);
+    const bcN=r5(-5,35);
+    let acN=bcN+pick([0,0,5,10,20,30]);
+    const exc=Math.random()<.18; if(exc) acN=Math.max(-10,bcN-pick([5,10]));
+    const ref=Math.min(acN,bcN);
+    const acT=Math.min(110,ref+pick([20,25,30,35,40,45,50,60,75,85]));
+    const d=acT-ref, yes=d>=ia;
+    return {q:`使用${trans==='sup'?'耳罩式':'插入式'}耳機，右耳 ${f} Hz 氣導是否須以遮蔽重測？`,
+      givens:[giv('右耳 AC（TE）',acT),giv('左耳 AC（NTE）',acN),giv('左耳 BC（NTE）',bcN)],
+      type:'choice',choices:['須遮蔽','不須遮蔽'],ans:yes?'須遮蔽':'不須遮蔽',
+      explain:[`氣導規則比較「測試耳氣導」與「非測試耳骨導」：AC_T − BC_N ≥ 最小 IA。`,
+        exc?`本題非測試耳氣導（${acN}）優於其骨導（${bcN}），依例外以較佳之氣導值代入。`:`代入非測試耳骨導 ${bcN} dB HL。`,
+        `${acT} − ${ref} = <b>${d} dB</b>，${yes?'≥':'<'} ${ia} dB（${trans==='sup'?'耳罩式最小 IA 40 dB':`插入式於 ${f} Hz 之最小 IA 取 ${ia} dB`}）。`,
+        yes?'可能發生跨耳聽覺，須遮蔽重測。':'不致發生跨耳聽覺，未遮蔽閾值即為真實閾值。']};
+  },
+  imlAC(){
+    const acN=r5(0,60), memc=pick([5,5,5,10]), f=memc===10?500:pick([1000,2000,4000]);
+    const ans=acN+memc+10;
+    return {q:`以遮蔽重測右耳 ${f} Hz 氣導。送入左耳之初始遮蔽量（IML）為多少 dB HL？`,
+      givens:[giv('左耳 AC（NTE）',acN),giv(`${f} Hz MEMC`,memc,'dB'),giv('安全係數 SF',10,'dB')],
+      type:'num',ans,
+      explain:[`<span class="formula">IML = HL_N + MEMC + SF</span>`,`= ${acN} + ${memc} + 10 = <b>${ans} dB HL</b>`,
+        'HL_N 為非測試耳之氣導閾值；MEMC 使噪音剛好能遮蔽位於 NTE 閾值之跨越訊號，SF 涵蓋個體差異（MEMC 為平均值）。']};
+  },
+  imlBC(){
+    const mode=pick(['bing','bing','cond','high']);
+    const f=mode==='high'?pick([2000,4000]):pick([250,500,1000]);
+    if(mode==='cond'){
+      const bcN=r5(0,20), acN=bcN+pick([20,25,30,40]);
+      const ans=acN+15;
+      return {q:`以遮蔽重測右耳 ${f} Hz 骨導。左耳（NTE）有傳導性聽損。IML 為多少 dB HL？（MEMC 5 dB、SF 10 dB）`,
+        givens:[giv('左耳 AC',acN),giv('左耳 BC',bcN),giv('左耳 ABG',acN-bcN,'dB')],type:'num',ans,
+        explain:[`<span class="formula">IML = HL_N + MEMC + SF + OE</span>`,`非測試耳有明顯氣骨導差（傳導成分）時，閉塞效應不存在，OE = 0。`,`= ${acN} + 5 + 10 + 0 = <b>${ans} dB HL</b>`]};
+    }
+    const acN=r5(0,45), un=r5(5,40);
+    const oe=mode==='high'?0:pick([0,5,10,15,20]);
+    const occ=un-(mode==='high'?pick([0,0,5]):oe);
+    const realOE=mode==='high'?0:oe;
+    const ans=acN+15+realOE;
+    return {q:`以遮蔽重測右耳 ${f} Hz 骨導。耳機戴上左耳、不給噪音之 Bing 測驗結果如下。IML 為多少 dB HL？（MEMC 5 dB、SF 10 dB）`,
+      givens:[giv('左耳 AC（NTE）',acN),giv('未閉塞 BC',un),giv('閉塞 BC',occ)],type:'num',ans,
+      explain:[`<span class="formula">IML = HL_N + MEMC + SF + OE</span>`,
+        mode==='high'?`OE 主要出現於 1000 Hz 以下；${f} Hz 不加 OE。閉塞後之些微差異屬測量誤差，或提示震動器位置須確認（變差時）。`:`OE = 未閉塞 − 閉塞 = ${un} − ${occ} = ${oe} dB（Martin, Butler, &amp; Burns, 1974）。`,
+        `= ${acN} + 5 + 10 + ${realOE} = <b>${ans} dB HL</b>`]};
+  },
+  interpret(){
+    const u=r5(10,60), sh=pick([0,5,5,10,15,20,25]), m=u+sh, ok=sh<=5;
+    return {q:`右耳未遮蔽氣導 ${u} dB HL；左耳加入初始遮蔽量後重測為 ${m} dB HL。下一步為何？`,
+      givens:[giv('未遮蔽閾值',u),giv('IML 下之閾值',m),giv('移動量',sh,'dB')],
+      type:'choice',choices:['記錄為遮蔽閾值（確認）','進入高原法'],ans:ok?'記錄為遮蔽閾值（確認）':'進入高原法',
+      explain:[ok?`移動 ${sh} dB ≤ 5 dB（容許中樞遮蔽）。非測試耳已受遮蔽而個案仍聽到，原閾值確由測試耳聽得。`:`移動 ${sh} dB > 5 dB：非測試耳被遮蔽後即聽不到，原閾值很可能由非測試耳跨耳聽得，須以高原法求真實閾值。`]};
+  },
+  plateau(){
+    const u=r5(30,55), t=u+pick([15,20,25,30]), n0=r5(20,35), w=pick([20,25,30,35]);
+    const rows=[]; let n=n0, thr=u+10;
+    if(thr>t) thr=t;
+    while(thr<t){rows.push([n,thr]); n+=5; thr+=5;}
+    const start=n; while(n<=start+w){rows.push([n,t]); n+=5;}
+    let o=t; for(let k=0;k<3;k++){o+=5; rows.push([n,o]); n+=5;}
+    return {q:'右耳 1000 Hz 未遮蔽氣導 '+u+' dB HL。以高原法得到下列結果，右耳真實遮蔽閾值為多少 dB HL？',
+      table:{head:['左耳噪音（dB EM）','右耳閾值（dB HL）'],rows},type:'num',ans:t,
+      explain:[`噪音 ${n0}–${start-5} dB：閾值隨噪音一對一上升，為遮蔽不足。`,
+        `噪音 ${start}–${start+w} dB：閾值維持 <b>${t} dB HL</b>，高原寬 ${w} dB（≥ 15–20 dB 之要求），即真實遮蔽閾值。`,
+        '其後閾值再度上升，為過度遮蔽：噪音跨至測試耳。']};
+  },
+  overmask(){
+    const ia=pick([40,45,50,55,60]), bc=r5(0,40), ask=pick(['start','mml']);
+    const start=ia+bc+5, ans=ask==='start'?start:start-5;
+    return {q:ask==='start'?'送入非測試耳之噪音自多少 dB HL 起會造成過度遮蔽？（MEMC 5 dB）':'最大遮蔽量（MML）為多少 dB HL？（MEMC 5 dB）',
+      givens:[giv('耳間衰減 IA',ia,'dB'),giv('測試耳 BC_T',bc)],type:'num',ans,
+      explain:[`<span class="formula">MN_N ≥ IA + BC_T + MEMC</span> = ${ia} + ${bc} + 5 = ${start} dB HL`,
+        `噪音為 ${ia+bc} dB HL 時，跨至測試耳之噪音恰達其骨導閾值，只「聽得到」；再高 MEMC 方能遮蔽測試耳之純音。`,
+        ask==='mml'?`<span class="formula">MML = (IA + BC_T + MEMC) − 5</span> = <b>${ans} dB HL</b>`:`過度遮蔽起點為 <b>${ans} dB HL</b>（簡化版 IA + BC_T 為 ${ia+bc}）。`]};
+  },
+  imlOver(){
+    const bcT=r5(0,30), acN=r5(20,70), oe=pick([0,0,15]), ia=40;
+    const iml=acN+15+oe, start=ia+bcT+5, yes=iml>=start;
+    return {q:`以遮蔽重測左耳骨導（250 Hz）。初始遮蔽量是否已造成過度遮蔽？（耳罩式耳機 IA 取 40 dB）`,
+      givens:[giv('右耳 AC（NTE）',acN),giv('右耳 OE',oe,'dB'),giv('左耳 BC_T',bcT)],
+      type:'choice',choices:['會過度遮蔽','不會過度遮蔽'],ans:yes?'會過度遮蔽':'不會過度遮蔽',
+      explain:[`IML = ${acN} + 5 + 10 + ${oe} = ${iml} dB HL`,`過度遮蔽起點 = IA + BC_T + MEMC = 40 + ${bcT} + 5 = ${start} dB HL`,
+        `${iml} ${yes?'≥':'<'} ${start}：${yes?'初始遮蔽量即過度遮蔽。可自較低噪音量嘗試尋找高原，或改用插入式耳機。':'初始遮蔽量未達過度遮蔽。'}`,
+        '非測試耳氣導較差、測試耳骨導較佳、閉塞效應較大時，此問題特別常見。']};
+  },
+  optimized(){
+    const acT=r5(55,90), iml=acT-10, sh=pick([10,15,20,25,30]);
+    const ask=pick(['iml','next']);
+    if(ask==='iml') return {q:'兩耳氣導相差 ≥ 25 dB，以最佳化遮蔽法重測較差耳氣導。IML 為多少 dB？',
+      givens:[giv('較差耳（TE）AC',acT)],type:'num',ans:iml,
+      explain:[`<span class="formula">IML = HL_T − 10</span> = ${acT} − 10 = <b>${iml} dB</b>`,'最佳化法以測試耳閾值為基準（Turner, 2004），所需重測次數少於傳統高原法。']};
+    return {q:`最佳化遮蔽法：IML ${iml} dB 使測試耳閾值由 ${acT} 移至 ${acT+sh} dB HL。下一個噪音量為多少 dB？`,
+      givens:[giv('未遮蔽 AC_T',acT),giv('IML',iml,'dB'),giv('IML 下閾值',acT+sh)],type:'num',ans:iml+sh,
+      explain:[`噪音增加量等於閾值移動量：${iml} + ${sh} = <b>${iml+sh} dB</b>。`,'若閾值維持不變即確認為真實閾值；再移動則依移動量再加噪音。']};
+  },
+  supra(){
+    if(Math.random()<.5){
+      const acT=r5(20,60), bcN=r5(-5,25), P=acT+20, yes=P-bcN>=40;
+      return {q:`右耳以 Olsen-Noffsinger tone decay test（20 dB SL）施測，是否須遮蔽左耳？`,
+        givens:[giv('右耳 AC',acT),giv('呈現強度 P_T',P),giv('左耳 BC',bcN)],type:'choice',choices:['須遮蔽','不須遮蔽'],ans:yes?'須遮蔽':'不須遮蔽',
+        explain:[`閾上測驗之規則：<span class="formula">P_T − BC_N ≥ 40 dB</span>，「A」改為測試音之呈現強度。`,`${P} − ${bcN} = <b>${P-bcN} dB</b>，${yes?'≥':'<'} 40 dB。`,
+          (acT-bcN<40&&yes)?`測閾值時 ${acT} − ${bcN} = ${acT-bcN} dB 不需遮蔽，閾上測驗卻需要。`:'']};
+    }
+    const P=r5(50,90), abg=pick([0,0,10,20]), ans=P-40+abg+15;
+    return {q:'計算閾上純音測驗送入非測試耳之遮蔽噪音量（MNN）。IA 未知，MEMC 5 dB、SF 10 dB。',
+      givens:[giv('呈現強度 P_T',P),giv('NTE 氣骨導差',abg,'dB')],type:'num',ans,
+      explain:[`<span class="formula">MNN = P_T − IA + ABG_N + MEMC + SF</span>`,`= ${P} − 40 + ${abg} + 5 + 10 = <b>${ans} dB HL</b>`,'計算後仍須檢查是否過度遮蔽。']};
+  },
+  speech(){
+    if(Math.random()<.5){
+      const S=r5(40,90), bc=r5(-5,45), yes=S-40>=bc;
+      return {q:'右耳以耳罩式耳機做語音辨識測驗，是否須遮蔽左耳？（IA 取 40 dB）',
+        givens:[giv('右耳語音呈現強度',S),giv('左耳最佳純音 BC',bc)],type:'choice',choices:['須遮蔽','不須遮蔽'],ans:yes?'須遮蔽':'不須遮蔽',
+        explain:[`<span class="formula">S_T − IA ≥ BC_N</span>`,`${S} − 40 = ${S-40} dB HL ${yes?'≥':'<'} ${bc} dB HL。`,'BC_N 取純音骨導之最佳值（ASHA 1988：500–4000 Hz；低頻明顯較佳時納入 250 Hz）。']};
+    }
+    const S=r5(50,95);
+    return {q:'對稱感音性聽損個案，依經驗法則，語音辨識測驗時非測試耳之遮蔽噪音量為多少 dB？',
+      givens:[giv('測試耳語音呈現強度',S)],type:'num',ans:S-20,
+      explain:[`經驗法則：噪音 ＝ 語音呈現強度 − 20 dB = <b>${S-20} dB</b>（Jerger &amp; Jerger, 1971；Yacullo, 1996）。`,'非測試耳有傳導性聽損時不適用，且仍須檢查遮蔽不足與過度遮蔽。']};
+  },
+  sal(){
+    const bc=pick([0,5,10,15,20,25,30,35,40,45,50]), abg=pick([0,10,20,30,40,50].filter(x=>bc+x<=70));
+    const ac=bc+abg, shift=55-bc;
+    return {q:'SAL 測驗：正常人在此噪音下之預期閾值移動為 55 dB。推估此耳之骨導閾值為多少 dB HL？',
+      givens:[giv('安靜下 AC',ac),giv('前額噪音下 AC',ac+shift)],type:'num',ans:bc,
+      explain:[`實際移動 = ${ac+shift} − ${ac} = ${shift} dB`,`<span class="formula">骨導 = 預期移動 − 實際移動</span> = 55 − ${shift} = <b>${bc} dB HL</b>`,
+        bc===0?'移動與正常人相同：耳蝸正常，屬傳導性。':(abg===0?'骨導等於氣導：感音性。':'介於兩者之間：混合性。')]};
+  }
+};
+
+let P=store.get('ml-practice',{topic:'all',tally:{}});
+if(!P.tally) P.tally={};
+let curQ=null, answered=false;
+function renderTopics(){
+  const box=$('#topics'); const groups=['基礎','進階','延伸'];
+  const t=id=>{const s=P.tally[id]||{c:0,n:0};return `${s.c}/${s.n}`};
+  let tot={c:0,n:0}; Object.values(P.tally).forEach(s=>{tot.c+=s.c;tot.n+=s.n});
+  let h=`<div class="topic-group"><button class="topic" data-t="all" aria-pressed="${P.topic==='all'}"><span>全部主題隨機</span><span class="score">${tot.c}/${tot.n}</span></button></div>`;
+  groups.forEach(g=>{
+    h+=`<div class="topic-group"><h3>${g}</h3>`+TOPICS.filter(x=>x.group===g).map(x=>`<button class="topic" data-t="${x.id}" aria-pressed="${P.topic===x.id}"><span>${x.name}</span><span class="score">${t(x.id)}</span></button>`).join('')+'</div>';
+  });
+  h+=`<button class="btn" id="resetTally" style="align-self:flex-start">清除練習紀錄</button>`;
+  box.innerHTML=h;
+  box.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{P.topic=b.dataset.t;store.set('ml-practice',P);renderTopics();newQ()});
+  $('#resetTally').onclick=()=>{P.tally={};store.set('ml-practice',P);renderTopics()};
+}
+function newQ(){
+  const id=P.topic==='all'?pick(TOPICS).id:P.topic;
+  curQ=Object.assign({topic:id},GEN[id]()); answered=false; renderQ();
+}
+function renderQ(){
+  const q=curQ, tp=TOPICS.find(x=>x.id===q.topic);
+  let h=`<div class="qhead"><span class="chip">${tp.group}｜${tp.name}</span><span class="tally">連續答對 <b>${P.streak||0}</b></span></div>`;
+  h+=`<p class="qtext">${q.q}</p>`;
+  if(q.givens) h+=`<div class="givens">${q.givens.map(g=>`<div class="given"><span>${g.k}</span><b>${g.v}<small style="font-size:12px;font-weight:500"> ${g.u}</small></b></div>`).join('')}</div>`;
+  if(q.table) h+=`<div class="qtable"><table><tr>${q.table.head.map(x=>`<th>${x}</th>`).join('')}</tr>${q.table.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+  if(q.type==='choice') h+=`<div class="answer">${q.choices.map(c=>`<button class="choice" data-c="${esc(c)}">${c}</button>`).join('')}</div>`;
+  else h+=`<form class="answer" id="numForm"><input id="numIn" inputmode="numeric" autocomplete="off" aria-label="答案"><span class="muted">dB</span><button class="btn primary" type="submit">檢查</button></form>`;
+  h+=`<div id="fb"></div><div class="row"><button class="btn" id="nextQ">下一題 →</button></div>`;
+  $('#qcard').innerHTML=h;
+  if(q.type==='choice') $('#qcard').querySelectorAll('.choice').forEach(b=>b.onclick=()=>check(b.dataset.c,b));
+  else {$('#numForm').onsubmit=e=>{e.preventDefault();const v=$('#numIn').value.trim();if(v==='')return;check(Number(v))}; try{$('#numIn').focus({preventScroll:true})}catch(e){}}
+  $('#nextQ').onclick=newQ;
+}
+function check(v,btn){
+  if(answered) return; answered=true;
+  const q=curQ, ok=q.type==='num'?v===q.ans:v===q.ans;
+  const s=P.tally[q.topic]||{c:0,n:0}; s.n++; if(ok)s.c++; P.tally[q.topic]=s;
+  P.streak=ok?(P.streak||0)+1:0; store.set('ml-practice',P);
+  if(btn){btn.classList.add(ok?'picked-ok':'picked-bad'); if(!ok) $('#qcard').querySelectorAll('.choice').forEach(b=>{if(b.dataset.c===q.ans)b.classList.add('picked-ok')});}
+  $('#fb').innerHTML=`<div class="fb ${ok?'ok':'bad'}"><div class="verdict">${ok?'正確':'答案：'+q.ans+(q.type==='num'?' dB'+(String(q.q).includes('dB HL')?' HL':''):'')}</div><ul>${q.explain.filter(Boolean).map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  renderTopics(); try{$('#nextQ').focus({preventScroll:true})}catch(e){}
+}
+
+/* ═════════════ 模擬案例 ═════════════ */
+const NR=NOHEAR;
+const CASES=[
+  {id:'deaf',name:'單側全聾',who:'張先生，45 歲',history:['一年前左耳突發性聽損，治療後未恢復','右耳無主訴','學習重點：影子曲線、氣導與骨導皆須遮蔽'],
+    R:{ac:[5,5,10,10,5],bc:[5,5,10,10,5]},L:{ac:[NR,NR,NR,NR,NR],bc:[NR,NR,NR,NR,NR]},
+    IA:{sup:[50,55,55,60,60],ins:[85,85,80,65,70],bc:[0,0,5,5,10]},OE:{sup:[25,20,10,0,0],ins:[10,10,0,0,0]}},
+  {id:'chl',name:'單側傳導性',who:'陳小妹，10 歲',history:['右耳反覆中耳積液，家長表示上課常聽不清楚','左耳正常','學習重點：骨導遮蔽、Bing 測驗求 OE、氣導 AOBG'],
+    R:{ac:[45,45,40,35,35],bc:[5,5,10,5,10]},L:{ac:[10,5,10,5,10],bc:[5,5,5,5,10]},
+    IA:{sup:[45,50,55,55,60],ins:[80,85,80,60,65],bc:[0,0,5,5,10]},OE:{sup:[25,20,10,0,0],ins:[10,10,0,0,0]}},
+  {id:'asym',name:'不對稱感音性',who:'王先生，62 歲',history:['左耳漸進性聽損合併耳鳴，待排除聽神經瘤','右耳輕度高頻聽損','學習重點：兩耳相差 ≥ 25 dB 時之最佳化遮蔽法'],
+    R:{ac:[15,15,20,25,30],bc:[15,15,20,25,30]},L:{ac:[60,65,70,75,80],bc:[60,65,70,75,80]},
+    IA:{sup:[50,55,60,55,65],ins:[80,85,85,65,70],bc:[0,0,5,10,10]},OE:{sup:[25,20,10,0,0],ins:[10,10,0,0,0]}},
+  {id:'dilemma',name:'雙側混合性',who:'李女士，50 歲',history:['雙耳耳硬化症，聽力逐年下降','自述「戴耳機時覺得自己的聲音很大」','學習重點：遮蔽兩難；比較耳罩式與插入式耳機'],
+    R:{ac:[60,60,55,50,55],bc:[5,5,10,15,15]},L:{ac:[60,65,60,55,60],bc:[10,10,10,20,20]},
+    IA:{sup:[45,50,50,55,60],ins:[80,80,75,60,65],bc:[0,0,5,5,10]},OE:{sup:[25,20,10,0,0],ins:[10,10,0,0,0]}},
+  {id:'lin',name:'講義綜合案例',who:'林女士，58 歲',history:['右耳悶塞感兩個月、自聲增強，點耳藥水無效','希望「不要戴那個吵的東西，快一點做完」','學習重點：IML 與過度遮蔽之核對、高原空間不足時之對策'],
+    R:{ac:[50,50,50,45,40],bc:[15,15,10,15,20]},L:{ac:[15,15,10,15,20],bc:[10,10,5,10,15]},
+    IA:{sup:[45,50,55,55,60],ins:[80,80,80,60,65],bc:[0,0,5,5,10]},OE:{sup:[20,15,10,0,0],ins:[10,10,0,0,0]}},
+  {id:'random',name:'隨機案例',who:'隨機產生',history:['每次產生不同之聽力型態與耳間衰減','可反覆練習'],random:true}
+];
+function genRandom(){
+  const mk=()=>{
+    const type=pick(['normal','snhl','snhl','chl','mixed','deaf']);
+    const ac=[],bc=[];
+    const base=r5(0,15), slope=pick([0,5,10,15]);
+    FREQS.forEach((f,i)=>{
+      let b=Math.min(80,base+slope*i+r5(0,5));
+      let g=0;
+      if(type==='normal'){b=r5(0,15);}
+      if(type==='snhl'){b=Math.min(85,r5(25,45)+slope*i);}
+      if(type==='chl'){b=r5(0,15); g=r5(25,45);}
+      if(type==='mixed'){b=Math.min(60,r5(20,35)+slope*i); g=r5(20,40);}
+      if(type==='deaf'){ac.push(NR);bc.push(NR);return;}
+      bc.push(b); ac.push(Math.min(110,b+g));
+    });
+    return {ac,bc,type};
+  };
+  let R=mk(),L=mk();
+  if(R.type==='deaf'&&L.type==='deaf') L=mk();
+  const sup=FREQS.map((f,i)=>r5(45,55)+5*Math.floor(i/2));
+  const ins=FREQS.map((f,i)=>i<=2?r5(75,85):r5(55,70));
+  return {R:{ac:R.ac,bc:R.bc},L:{ac:L.ac,bc:L.bc},IA:{sup,ins,bc:[0,0,5,5,10]},OE:{sup:[pick([20,25,30]),pick([15,20]),pick([5,10]),0,0],ins:[10,pick([5,10]),0,0,0]},types:[R.type,L.type]};
+}
+
+let S=null, PAT=null;
+function freshSim(caseId){
+  return {caseId,ear:'R',sig:'ac',trans:'sup',fi:2,L:30,M:30,maskOn:false,occl:false,last:null,trials:0,rec:{},plat:{},log:[],oe:{},graded:false,pat:null};
+}
+function loadSim(caseId){
+  const saved=store.get('ml-sim-'+caseId,null);
+  S=saved&&saved.caseId===caseId?saved:freshSim(caseId);
+  const c=CASES.find(x=>x.id===caseId);
+  if(c.random){ if(!S.pat) S.pat=genRandom(); PAT=S.pat; } else PAT=c;
+  store.set('ml-case',caseId);
+  renderSim();
+}
+const save=()=>store.set('ml-sim-'+S.caseId,S);
+const key=(e,sig,fi)=>`${e}-${sig}-${fi}`;
+
+/* 反應模型：純音與噪音之跨越皆經骨導途徑；噪音以 dB EM 表示 */
+function respondsParts(st){
+  const i=st.fi, T=PAT[st.ear], N=PAT[other(st.ear)];
+  const abgT=T.ac[i]>=NR?0:T.ac[i]-T.bc[i], abgN=N.ac[i]>=NR?0:N.ac[i]-N.bc[i];
+  const maskOn=st.maskOn;
+  const noiseAtTE=maskOn?st.M-PAT.IA[st.trans][i]:-999;
+  const teLevel=st.sig==='ac'?st.L-abgT:st.L;
+  const teHears=T.bc[i]<NR&&teLevel>=T.bc[i]&&teLevel>noiseAtTE&&(st.sig==='bc'||st.L>=T.ac[i]);
+  const occluded=st.sig==='bc'&&(maskOn||st.occl);
+  const oe=occluded&&abgN<10?PAT.OE[st.trans][i]:0;
+  const cross=st.sig==='ac'?st.L-PAT.IA[st.trans][i]:st.L-PAT.IA.bc[i]+oe;
+  const noiseAtNTE=maskOn?st.M-abgN:-999;
+  const nHears=N.bc[i]<NR&&cross>=N.bc[i]&&cross>noiseAtNTE;
+  return {te:teHears,n:nHears};
+}
+const responds=st=>{const p=respondsParts(st);return p.te||p.n;};
+const toneMax=(sig,fi)=>sig==='ac'?AC_MAX[fi]:BC_MAX[fi];
+function thrAt(e,sig,trans,fi,M,maskOn){
+  for(let L=-10;L<=toneMax(sig,fi);L+=5){ if(responds({ear:e,sig,trans,fi,L,M,maskOn,occl:false})) return L; }
+  return null;
+}
+function trueVal(e,sig,fi){ const v=PAT[e][sig][fi]; return v<=toneMax(sig,fi)?v:null; }
+/* 真實閾值可否由測試耳本身取得：閾值等於真實值，且非測試耳於該強度聽不到 */
+function properAt(e,sig,trans,fi,M,maskOn){
+  const tv=trueVal(e,sig,fi), th=thrAt(e,sig,trans,fi,M,maskOn);
+  if(th!==tv) return false;
+  if(tv===null) return true;
+  return !respondsParts({ear:e,sig,trans,fi,L:tv,M,maskOn,occl:false}).n;
+}
+function plateauWidth(e,sig,fi,trans){
+  let best=-1,run=-1;
+  for(let M=0;M<=NOISE_MAX;M+=5){ if(properAt(e,sig,trans,fi,M,true)){run=run<0?0:run+5; best=Math.max(best,run);} else run=-1; }
+  return best;
+}
+function attainable(e,sig,fi,trans){
+  return properAt(e,sig,trans,fi,0,false)||plateauWidth(e,sig,fi,trans)>=0;
+}
+
+/* ── 介面 ── */
+function renderCaseBar(){
+  $('#caseBar').innerHTML=CASES.map(c=>`<button class="case-btn" data-c="${c.id}" aria-pressed="${S&&S.caseId===c.id}">${c.name}<small>${c.who}</small></button>`).join('');
+  $('#caseBar').querySelectorAll('.case-btn').forEach(b=>b.onclick=()=>loadSim(b.dataset.c));
+}
+function renderSim(){
+  renderCaseBar();
+  const c=CASES.find(x=>x.id===S.caseId);
+  $('#caseBox').innerHTML=`<h2>${c.who}｜${c.name}</h2><ul>${c.history.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  $('#segFreq').innerHTML=FREQS.map((f,i)=>`<button data-v="${i}" aria-pressed="${S.fi===i}">${f>=1000?f/1000+'k':f}</button>`).join('');
+  $('#segFreq').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.fi=+b.dataset.v;S.last=null;update()});
+  update();
+}
+function setSeg(id,val){ document.querySelectorAll(id+' button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(val)))); }
+function clampL(){ S.L=Math.max(-10,Math.min(toneMax(S.sig,S.fi),S.L)); S.M=Math.max(0,Math.min(NOISE_MAX,S.M)); }
+function update(){
+  clampL();
+  setSeg('#segEar',S.ear); setSeg('#segSig',S.sig); setSeg('#segTrans',S.trans); setSeg('#segFreq',S.fi);
+  $('#lcdTone').innerHTML=`${S.L}<small>dB HL</small>`;
+  $('#lcdNoise').innerHTML=S.maskOn?`${S.M}<small>dB EM</small>`:`${S.M}<small>關閉</small>`;
+  $('#lcdNoise').classList.toggle('off',!S.maskOn);
+  $('#maskOn').checked=S.maskOn; $('#occl').checked=S.occl||(S.sig==='bc'&&S.maskOn);
+  $('#occl').disabled=S.sig!=='bc'||S.maskOn; $('#occlWrap').style.opacity=S.sig==='bc'?1:.45;
+  const lamp=$('#lamp'); lamp.classList.remove('yes','no');
+  if(S.last){lamp.classList.add(S.last.r?'yes':'no'); $('#lampTxt').textContent=S.last.r?'有反應':'無反應';} else $('#lampTxt').textContent='待命';
+  const k=key(S.ear,S.sig,S.fi), r=S.rec[k];
+  const sigTxt=S.sig==='ac'?'氣導':'骨導';
+  let st=`<b>${earName(S.ear)}・${sigTxt}・${FREQS[S.fi]} Hz</b>　${S.sig==='bc'?'震動器於'+earName(S.ear)+'乳突；':''}噪音送${earName(other(S.ear))}（${S.trans==='sup'?'耳罩式':'插入式'}）`;
+  if(r) st+=`　已記錄：${r.cnm?'could not mask':(r.nr?'NR':r.v+' dB HL')}${r.masked?'（遮蔽 '+r.M+' dB EM）':'（未遮蔽）'}`;
+  if(S.sig==='bc'&&S.fi<=2) st+=`<br>OE 紀錄（${earName(other(S.ear))} ${FREQS[S.fi]} Hz）：<input class="oe-in" id="oeIn" inputmode="numeric" value="${S.oe[other(S.ear)+S.fi]??''}" aria-label="閉塞效應"> dB`;
+  $('#statusLine').innerHTML=st;
+  const oeIn=$('#oeIn'); if(oeIn) oeIn.onchange=()=>{const v=oeIn.value.trim(); if(v==='')delete S.oe[other(S.ear)+S.fi]; else S.oe[other(S.ear)+S.fi]=Number(v); save(); renderHint();};
+  $('#showTruth').disabled=!S.graded;
+  drawAudiogram(); drawPlateau(); renderHint(); renderLog(); save();
+}
+document.querySelectorAll('#segEar button').forEach(b=>b.onclick=()=>{S.ear=b.dataset.v;S.last=null;update()});
+document.querySelectorAll('#segSig button').forEach(b=>b.onclick=()=>{S.sig=b.dataset.v;S.last=null;if(S.sig==='ac')S.occl=false;update()});
+document.querySelectorAll('#segTrans button').forEach(b=>b.onclick=()=>{S.trans=b.dataset.v;S.last=null;update()});
+document.querySelectorAll('#toneSteps button').forEach(b=>b.onclick=()=>{S.L+=+b.dataset.d;S.last=null;update()});
+document.querySelectorAll('#noiseSteps button').forEach(b=>b.onclick=()=>{S.M+=+b.dataset.d;S.last=null;update()});
+$('#maskOn').onchange=e=>{S.maskOn=e.target.checked;S.last=null;update()};
+$('#occl').onchange=e=>{S.occl=e.target.checked;S.last=null;update()};
+function present(){
+  const r=responds(S); S.trials++;
+  S.last={r}; S.log.unshift({n:S.trials,e:S.ear,sig:S.sig,t:S.trans,f:FREQS[S.fi],L:S.L,M:S.maskOn?S.M:null,o:S.sig==='bc'&&(S.occl||S.maskOn),r});
+  if(S.log.length>200) S.log.length=200;
+  update();
+}
+$('#present').onclick=present;
+function record(kind){
+  const k=key(S.ear,S.sig,S.fi);
+  if(kind==='clear'){delete S.rec[k];}
+  else S.rec[k]={v:S.L,nr:kind==='nr',cnm:kind==='cnm',masked:S.maskOn,M:S.M,trans:S.trans,occl:S.sig==='bc'&&S.occl&&!S.maskOn};
+  update();
+}
+$('#recThr').onclick=()=>record('thr'); $('#recNR').onclick=()=>record('nr'); $('#recCNM').onclick=()=>record('cnm'); $('#recClear').onclick=()=>record('clear');
+$('#recPlateau').onclick=()=>{
+  const k=key(S.ear,S.sig,S.fi); const arr=S.plat[k]||[];
+  const M=S.maskOn?S.M:0; const ix=arr.findIndex(p=>p.M===M);
+  if(ix>=0) arr[ix].L=S.L; else arr.push({M,L:S.L,unm:!S.maskOn});
+  arr.sort((a,b)=>a.M-b.M); S.plat[k]=arr; update();
+};
+document.addEventListener('keydown',e=>{
+  if($('#view-cases').hidden) return;
+  const tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='textarea'||tag==='select') return;
+  if(e.key==='ArrowUp'){S.L+=5;S.last=null;update();e.preventDefault();}
+  else if(e.key==='ArrowDown'){S.L-=5;S.last=null;update();e.preventDefault();}
+  else if(e.key==='PageUp'){S.M+=5;S.last=null;update();e.preventDefault();}
+  else if(e.key==='PageDown'){S.M-=5;S.last=null;update();e.preventDefault();}
+  else if(e.key===' '&&tag!=='button'){present();e.preventDefault();}
+  else if(e.key==='Enter'&&tag!=='button'){record('thr');e.preventDefault();}
+});
+
+/* ── 聽力圖 ── */
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const AG={x0:70,x1:530,y0:30,y1:400,lo:-10,hi:120};
+const ax=i=>AG.x0+40+i*((AG.x1-AG.x0-80)/(FREQS.length-1));
+const ay=v=>AG.y0+(v-AG.lo)*(AG.y1-AG.y0)/(AG.hi-AG.lo);
+function sym(e,sig,masked,x,y,color,op){
+  const s=8, o=op||1, sw=2.2;
+  const st=`stroke="${color}" stroke-width="${sw}" fill="none" opacity="${o}"`;
+  if(sig==='ac'){
+    if(e==='R') return masked?`<path d="M${x} ${y-s-1}L${x+s+1} ${y+s}L${x-s-1} ${y+s}Z" ${st}/>`:`<circle cx="${x}" cy="${y}" r="${s}" ${st}/>`;
+    return masked?`<rect x="${x-s}" y="${y-s}" width="${2*s}" height="${2*s}" ${st}/>`:`<path d="M${x-s} ${y-s}L${x+s} ${y+s}M${x+s} ${y-s}L${x-s} ${y+s}" ${st}/>`;
+  }
+  const dx=e==='R'?-15:15; const X=x+dx;
+  if(e==='R') return masked?`<path d="M${X+5} ${y-s}H${X-3}V${y+s}H${X+5}" ${st}/>`:`<path d="M${X+5} ${y-s}L${X-5} ${y}L${X+5} ${y+s}" ${st}/>`;
+  return masked?`<path d="M${X-5} ${y-s}H${X+3}V${y+s}H${X-5}" ${st}/>`:`<path d="M${X-5} ${y-s}L${X+5} ${y}L${X-5} ${y+s}" ${st}/>`;
+}
+function nrArrow(e,sig,x,y,color,op){
+  const dx=(sig==='bc'?(e==='R'?-15:15):0), X=x+dx, d=e==='R'?-1:1;
+  return `<path d="M${X} ${y+10}L${X+d*10} ${y+24}M${X+d*10} ${y+24}l${-d*1} -7M${X+d*10} ${y+24}l${-d*7} -2" stroke="${color}" stroke-width="2" fill="none" opacity="${op||1}"/>`;
+}
+function drawAudiogram(){
+  const ink=css('--ink'), muted=css('--muted'), line=css('--line'), red=css('--right'), blue=css('--left'), ghost=css('--ghost'), surf=css('--surface'), acc=css('--accent');
+  let h=`<rect x="${AG.x0}" y="${AG.y0}" width="${AG.x1-AG.x0}" height="${AG.y1-AG.y0}" fill="${surf}" stroke="${line}"/>`;
+  for(let v=AG.lo;v<=AG.hi;v+=10){h+=`<line x1="${AG.x0}" x2="${AG.x1}" y1="${ay(v)}" y2="${ay(v)}" stroke="${line}" stroke-width="${v===0?1.6:1}"/><text x="${AG.x0-8}" y="${ay(v)+4}" text-anchor="end" font-size="11" fill="${muted}">${v}</text>`;}
+  FREQS.forEach((f,i)=>{h+=`<line x1="${ax(i)}" x2="${ax(i)}" y1="${AG.y0}" y2="${AG.y1}" stroke="${line}"/><text x="${ax(i)}" y="${AG.y0-10}" text-anchor="middle" font-size="12" fill="${muted}">${f}</text>`;});
+  h+=`<text x="18" y="${(AG.y0+AG.y1)/2}" transform="rotate(-90 18 ${(AG.y0+AG.y1)/2})" text-anchor="middle" font-size="12" fill="${muted}">聽力閾值（dB HL）</text>`;
+  h+=`<rect x="${ax(S.fi)-22}" y="${AG.y0}" width="44" height="${AG.y1-AG.y0}" fill="${acc}" opacity=".08"/>`;
+  if(S.graded&&$('#showTruth').checked){
+    ['R','L'].forEach(e=>{
+      let pts=[]; FREQS.forEach((f,i)=>{const v=trueVal(e,'ac',i); if(v!==null) pts.push(`${ax(i)},${ay(v)}`);});
+      if(pts.length>1) h+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${ghost}" stroke-width="2" stroke-dasharray="5 4"/>`;
+      FREQS.forEach((f,i)=>['ac','bc'].forEach(sig=>{const v=trueVal(e,sig,i); const y=v===null?ay(toneMax(sig,i)):ay(v); h+=sym(e,sig,false,ax(i),y,ghost,.55); if(v===null) h+=nrArrow(e,sig,ax(i),y,ghost,.55);}));
+    });
+  }
+  ['R','L'].forEach(e=>{
+    const col=e==='R'?red:blue; let pts=[];
+    FREQS.forEach((f,i)=>{const r=S.rec[key(e,'ac',i)]; if(r&&!r.nr&&!r.cnm) pts.push(`${ax(i)},${ay(r.v)}`);});
+    if(pts.length>1) h+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="1.6"/>`;
+    FREQS.forEach((f,i)=>['ac','bc'].forEach(sig=>{
+      const r=S.rec[key(e,sig,i)]; if(!r) return;
+      const y=ay(r.v);
+      h+=sym(e,sig,r.masked,ax(i),y,col);
+      if(r.nr) h+=nrArrow(e,sig,ax(i),y,col);
+      if(r.cnm) h+=`<text x="${ax(i)+(e==='R'?-16:16)}" y="${y+22}" text-anchor="middle" font-size="10" fill="${col}">CNM</text>`;
+    }));
+  });
+  $('#audiogram').innerHTML=h;
+  const L=(e,sig,m,t)=>`<span><svg width="22" height="22" viewBox="-11 -11 22 22">${sym(e,sig,m,e==='R'&&sig==='bc'?15:(e==='L'&&sig==='bc'?-15:0),0,e==='R'?red:blue)}</svg>${t}</span>`;
+  $('#legend').innerHTML=L('R','ac',0,'右 AC')+L('R','ac',1,'右 AC 遮蔽')+L('L','ac',0,'左 AC')+L('L','ac',1,'左 AC 遮蔽')+L('R','bc',0,'右 BC')+L('R','bc',1,'右 BC 遮蔽')+L('L','bc',0,'左 BC')+L('L','bc',1,'左 BC 遮蔽')+'<span>↘ 無反應</span><span>灰色虛線＝真實閾值</span>';
+}
+$('#showTruth').onchange=drawAudiogram;
+
+/* ── 高原圖 ── */
+function drawPlateau(){
+  const k=key(S.ear,S.sig,S.fi), arr=S.plat[k]||[];
+  $('#plateauTitle').textContent=`${earName(S.ear)} ${S.sig==='ac'?'氣導':'骨導'} ${FREQS[S.fi]} Hz`;
+  const muted=css('--muted'), line=css('--line'), brand=css('--brand'), surf=css('--surface');
+  const X0=42,X1=310,Y0=12,Y1=186, px=m=>X0+m*(X1-X0)/NOISE_MAX, py=v=>Y1-(v+10)*(Y1-Y0)/130;
+  let h=`<rect x="${X0}" y="${Y0}" width="${X1-X0}" height="${Y1-Y0}" fill="${surf}" stroke="${line}"/>`;
+  for(let v=0;v<=120;v+=20) h+=`<line x1="${X0}" x2="${X1}" y1="${py(v)}" y2="${py(v)}" stroke="${line}"/><text x="${X0-6}" y="${py(v)+4}" font-size="10" text-anchor="end" fill="${muted}">${v}</text>`;
+  for(let m=0;m<=NOISE_MAX;m+=20) h+=`<text x="${px(m)}" y="${Y1+14}" font-size="10" text-anchor="middle" fill="${muted}">${m}</text>`;
+  h+=`<text x="${(X0+X1)/2}" y="${Y1+30}" font-size="10" text-anchor="middle" fill="${muted}">非測試耳噪音（dB EM）</text>`;
+  if(arr.length){
+    h+=`<polyline points="${arr.map(p=>`${px(p.M)},${py(p.L)}`).join(' ')}" fill="none" stroke="${brand}" stroke-width="2"/>`;
+    arr.forEach(p=>{h+=`<circle cx="${px(p.M)}" cy="${py(p.L)}" r="4" fill="${p.unm?surf:brand}" stroke="${brand}" stroke-width="2"/>`});
+    // 偵測高原
+    let best=null; for(let a=0;a<arr.length;a++){let b=a; while(b+1<arr.length&&arr[b+1].L===arr[a].L) b++; const w=arr[b].M-arr[a].M; if(b>a&&(!best||w>best.w)) best={a,b,w,L:arr[a].L};}
+    if(best) h+=`<text x="${px((arr[best.a].M+arr[best.b].M)/2)}" y="${py(best.L)-10}" font-size="11" text-anchor="middle" fill="${brand}">高原 ${best.w} dB${best.w>=15?'':'（不足）'}</text>`;
+  } else h+=`<text x="${(X0+X1)/2}" y="${(Y0+Y1)/2}" font-size="12" text-anchor="middle" fill="${muted}">尚無資料</text>`;
+  $('#plateau').innerHTML=h;
+}
+
+/* ── 計算提示 ── */
+function recNum(e,sig,i){const r=S.rec[key(e,sig,i)]; return r&&!r.nr&&!r.cnm&&!r.occl?r:null;}
+function renderHint(){
+  const i=S.fi, e=S.ear, n=other(e);
+  const acT=recNum(e,'ac',i), acN=recNum(n,'ac',i), bcT=recNum(e,'bc',i), bcN=recNum(n,'bc',i);
+  const unmBC=[recNum('R','bc',i),recNum('L','bc',i)].filter(r=>r&&!r.masked).map(r=>r.v);
+  const bcBest=unmBC.length?Math.min(...unmBC):null;
+  const iaMin=S.trans==='sup'?40:(i<=2?75:50);
+  const rows=[];
+  const flag=y=>`<span class="flag ${y?'yes':'no'}">${y?'須遮蔽':'不須'}</span>`;
+  if(acT&&(bcT||bcBest!==null)){const b=bcT&&bcT.masked?bcT.v:(bcT?bcT.v:bcBest); rows.push(['ABG（測試耳）',`${acT.v} − ${b} = ${acT.v-b}${flag(acT.v-b>=15)}`]);}
+  if(acT&&(bcN||bcBest!==null)){let b=bcN&&bcN.masked?bcN.v:(bcN?bcN.v:bcBest); let note=''; if(acN&&acN.v<b){b=acN.v;note='（以較佳之 AC_N 代入）';} rows.push(['AOBG',`${acT.v} − ${b} = ${acT.v-b}${note}${flag(acT.v-b>=iaMin)}`]); rows.push(['最小 IA',`${iaMin} dB（${S.trans==='sup'?'耳罩式':'插入式'}）`]);}
+  if(acN){
+    const oe=S.sig==='bc'&&i<=2?(S.oe[n+i]??null):0;
+    rows.push(['IML（'+(S.sig==='ac'?'氣導':'骨導')+'）',S.sig==='ac'?`${acN.v} + 5 + 10 = ${acN.v+15}`:(oe===null?`${acN.v} + 5 + 10 + OE（尚未記錄）`:`${acN.v} + 5 + 10 + ${oe} = ${acN.v+15+oe}`)]);
+  }
+  const bcTv=bcT&&bcT.masked?bcT.v:bcBest;
+  if(bcTv!==null&&bcTv!==undefined){const st=iaMin+bcTv+5; rows.push(['過度遮蔽起點',`${iaMin} + ${bcTv} + 5 = ${st}（MML ${st-5}）`]);}
+  $('#hint').innerHTML=rows.length?`<dl>${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl>`:'<p class="note">目前頻率尚無足夠之記錄。</p>';
+}
+
+/* ── 紀錄 ── */
+function renderLog(){
+  $('#trialCount').textContent=`共 ${S.trials} 次給音`;
+  if(!S.log.length){$('#log').innerHTML='<p class="note">按「給音」後，每次呈現皆列於此。</p>';return;}
+  $('#log').innerHTML=`<table><tr><th>#</th><th>耳</th><th>訊號</th><th>Hz</th><th>純音</th><th>噪音</th><th>反應</th></tr>${S.log.slice(0,60).map(t=>`<tr><td>${t.n}</td><td>${t.e}</td><td>${t.sig==='ac'?'AC':'BC'}${t.o&&t.M===null?'（閉塞）':''}${t.t==='ins'?'・插':''}</td><td>${t.f}</td><td>${t.L}</td><td>${t.M===null?'—':t.M}</td><td>${t.r?'<span class="tag ok">有</span>':'<span class="tag none">無</span>'}</td></tr>`).join('')}</table>`;
+}
+
+/* ── 評分 ── */
+function shouldMask(e,sig,i,trans){
+  const n=other(e), acT=recNum(e,'ac',i);
+  const unm=[recNum('R','bc',i),recNum('L','bc',i)].filter(r=>r&&!r.masked).map(r=>r.v);
+  const bcBest=unm.length?Math.min(...unm):null;
+  if(!acT||bcBest===null) return false;
+  if(sig==='bc'){const b=recNum(e,'bc',i); return acT.v-(b?b.v:bcBest)>=15;}
+  const bcN=recNum(n,'bc',i), acN=recNum(n,'ac',i);
+  let ref=bcN&&bcN.masked?bcN.v:bcBest; if(acN&&acN.v<ref) ref=acN.v;
+  const ia=trans==='sup'?40:(i<=2?75:50);
+  return acT.v-ref>=ia;
+}
+function grade(){
+  const out=[]; let ok=0,tot=0;
+  ['R','L'].forEach(e=>['ac','bc'].forEach(sig=>FREQS.forEach((f,i)=>{
+    tot++;
+    const r=S.rec[key(e,sig,i)], tv=trueVal(e,sig,i), tvTxt=tv===null?'NR':tv;
+    let st,cls,why='';
+    const attS=attainable(e,sig,i,'sup'), attI=attainable(e,sig,i,'ins');
+    if(!r){st='未記錄';cls='none';why='此點尚未記錄。';}
+    else if(r.cnm){
+      const w=plateauWidth(e,sig,i,r.trans), att=properAt(e,sig,r.trans,i,0,false)||w>=15;
+      if(!att){st='合理';cls='ok';ok++;why=`以${r.trans==='sup'?'耳罩式':'插入式'}耳機${w<0?'確無法取得高原':'之高原寬度不足 15 dB'}。`+(r.trans==='sup'&&attI?'改用插入式耳機可取得真實閾值。':'');}
+      else {st='錯誤';cls='bad';why=`以${r.trans==='sup'?'耳罩式':'插入式'}耳機仍可找到高原，應自較低噪音量起嘗試。`;}
+    }
+    else {
+      const rv=r.nr?null:r.v;
+      const match=(rv===null&&tv===null)||(rv!==null&&tv!==null&&Math.abs(rv-tv)<=5)||(r.nr&&tv!==null&&r.v>=toneMax(sig,i)&&tv>=toneMax(sig,i));
+      if(match){
+        if(!r.masked&&shouldMask(e,sig,i,r.trans)){st='數值正確';cls='warn';why=sig==='bc'?'依規則 ABG ≥ 15 dB，應以遮蔽確認。':'依規則 AOBG 已達最小 IA，應以遮蔽確認。';}
+        else {st='正確';cls='ok';ok++;}
+      } else if(rv!==null&&(tv===null||rv<tv)){
+        st='錯誤';cls='bad';why=r.masked?'遮蔽不足：非測試耳仍聽到測試音。應繼續提高噪音直到出現高原。':'未遮蔽所得之影子閾值（跨耳聽覺）。';
+      } else if(rv===null&&tv!==null){
+        st='錯誤';cls='bad';why=r.masked?'可能為過度遮蔽或未測到最大輸出前即停止。':'未測至閾值即記錄 NR。';
+      } else {
+        st='錯誤';cls='bad';why=r.masked?`過度遮蔽：噪音 ${r.M} dB EM 跨至測試耳，使閾值假性升高。`:'閾值高於真實值，請確認施測方式。';
+      }
+    }
+    if(r&&!attS&&r.trans==='sup'&&cls!=='ok') why+='（此點以耳罩式耳機屬遮蔽兩難，'+(attI?'改用插入式可解決）':'插入式亦無法取得）');
+    out.push({e,sig,f,rec:r?(r.cnm?'CNM':(r.nr?'NR':r.v)+(r.masked?`（${r.M}）`:'')):'—',tv:tvTxt,st,cls,why});
+  })));
+  S.graded=true; save();
+  const pct=Math.round(ok/tot*100);
+  const hasTypes=PAT.types?`<p class="note">隨機案例之實際型態：右耳 ${PAT.types[0]}、左耳 ${PAT.types[1]}。</p>`:'';
+  const iaTxt=`<p class="note">本案例之耳間衰減（耳罩式）：${PAT.IA.sup.join('、')} dB；插入式：${PAT.IA.ins.join('、')} dB（250–4000 Hz）。</p>`;
+  $('#gradeOut').innerHTML=`<div class="row" style="gap:16px;margin-bottom:8px"><span class="score-big">${ok}/${tot}</span><span class="muted">正確率 ${pct}%｜共給音 ${S.trials} 次</span></div>${hasTypes}${iaTxt}
+  <table><tr><th>耳</th><th>訊號</th><th>Hz</th><th>記錄（噪音）</th><th>真實</th><th>判定</th><th>說明</th></tr>${out.map(o=>`<tr><td>${o.e}</td><td>${o.sig==='ac'?'AC':'BC'}</td><td>${o.f}</td><td>${o.rec}</td><td>${o.tv}</td><td><span class="tag ${o.cls}">${o.st}</span></td><td class="reason">${o.why}</td></tr>`).join('')}</table>`;
+  $('#showTruth').disabled=false; $('#showTruth').checked=true; drawAudiogram();
+}
+$('#grade').onclick=grade;
+const resetBtn=$('#resetCase'); let resetArm=false;
+resetBtn.onclick=()=>{
+  if(!resetArm){resetArm=true;resetBtn.textContent='再按一次確認清除';setTimeout(()=>{resetArm=false;resetBtn.textContent='重新開始此案例'},3000);return;}
+  resetArm=false; resetBtn.textContent='重新開始此案例';
+  const id=S.caseId; S=freshSim(id); const c=CASES.find(x=>x.id===id);
+  if(c.random){S.pat=genRandom();PAT=S.pat;}
+  $('#gradeOut').innerHTML='<p class="note">已重新開始。</p>'; $('#showTruth').checked=false; save(); renderSim();
+};
+
+/* ═════════════ 公式速查 ═════════════ */
+const RULES=[
+  ['骨導須遮蔽','ABG_T ≥ 15 dB','測試耳氣骨導差 > 10 dB。ASHA（2005）採 ≥ 10 dB。'],
+  ['氣導須遮蔽','AC_T − BC_N ≥ 40 dB','比較測試耳氣導與非測試耳骨導；插入式改用其最小 IA。NTE 氣導優於骨導時以氣導代入。'],
+  ['氣導初始遮蔽量','IML = HL_N + MEMC + SF','HL_N 為非測試耳氣導閾值；MEMC 5 dB、SF 10 dB。'],
+  ['骨導初始遮蔽量','IML = HL_N + MEMC + SF + OE','OE 以 Bing 測驗求得（≤ 1000 Hz）；NTE 有傳導成分時 OE 為 0。'],
+  ['初始遮蔽量判讀','移動 ≤ 5 dB → 確認','移動 > 5 dB 進入高原法；5 dB 為容許之中樞遮蔽。'],
+  ['高原','寬度 ≥ 15–20 dB','噪音增加而閾值不變之範圍，即真實遮蔽閾值。'],
+  ['過度遮蔽','MN_N ≥ IA + BC_T + MEMC','噪音跨至測試耳並遮蔽之。'],
+  ['最大遮蔽量','MML = (IA + BC_T + MEMC) − 5','不致過度遮蔽之最高噪音量。'],
+  ['最佳化遮蔽法','IML = HL_T − 10','兩耳 AC 相差 ≥ 25 dB 測較差耳；噪音增加量＝閾值移動量。骨導取 BC + 30 或流程值之較高者。'],
+  ['閾上純音','P_T − BC_N ≥ 40 dB','MNN = P_T − IA + ABG_N + MEMC + SF。'],
+  ['語音','S_T − IA ≥ BC_N','SRT：IML = SRT_N + MEMC + SF，移動 ≥ 10 dB 用高原法。辨識測驗經驗法則：噪音＝語音 − 20 dB。'],
+  ['SAL','骨導 = 預期移動 − 實際移動','前額骨導噪音下重測氣導。'],
+  ['耳間衰減（最小值）','耳罩式 40｜插入式 75 / 50','插入式：≤ 1000 Hz 75–85 dB、> 1000 Hz 50–65 dB；骨導視為 0 dB。']
+];
+$('#rules').innerHTML=RULES.map(r=>`<div class="rule"><h3 style="margin:0">${r[0]}</h3><div class="f">${r[1]}</div><p>${r[2]}</p></div>`).join('');
+
+/* ═════════════ 啟動 ═════════════ */
+renderTopics(); newQ();
+loadSim(store.get('ml-case','deaf'));
+const h0=(location.hash||'').slice(1);
+showView(['practice','cases','rules'].includes(h0)?h0:store.get('ml-view','practice'));
+</script>
